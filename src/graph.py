@@ -27,8 +27,10 @@ class DynamicGraph:
         del self.edges[node]
 
         # Remove edges pointing to this node
-        for adj_list in self.edges.values():
-            self.edges[node] = [(dest, weight) for dest, weight in adj_list if dest != node]
+        for source in self.edges:
+            self.edges[source] = [
+                (dest, weight) for dest, weight in self.edges[source] if dest != node
+            ]
 
     def add_edge(self, source: int, dest: int, weight: float) -> None:
         """Add or update an edge with given weight"""
