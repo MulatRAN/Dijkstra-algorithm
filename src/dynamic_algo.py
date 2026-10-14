@@ -3,22 +3,9 @@ Dynamic Shortest Path Algorithms
 Maintains shortest paths incrementally after directed edge changes.
 """
 import heapq
-from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
 from .graph import DynamicGraph
-
-
-@dataclass(frozen=True)
-class DynamicStep:
-    """One vertex processed while repairing the incremental shortest paths."""
-
-    node: str
-    old_distance: float
-    new_distance: float
-    rhs_value: float
-    invalidated: bool
-    updated_nodes: Tuple[str, ...]
 
 
 class DynamicDijkstra:
@@ -37,7 +24,6 @@ class DynamicDijkstra:
         self.open_list: List[Tuple[Tuple[float, float], str, int]] = []
         self._queue_versions: Dict[str, int] = {}
         self._queued: Set[str] = set()
-        self.last_trace: List[DynamicStep] = []
         self._initialize()
 
     def _initialize(self) -> None:
@@ -98,47 +84,21 @@ class DynamicDijkstra:
 
     def compute_shortest_paths(self) -> None:
         """Process inconsistent vertices until all shortest paths are current."""
-        self.last_trace = []
         while self.open_list:
             _, current, version = heapq.heappop(self.open_list)
             if version != self._queue_versions.get(current):
                 continue
             self._queued.discard(current)
 
-            old_distance = self.g_values[current]
-            rhs_value = self.rhs_values[current]
-            updated_nodes = []
             if self.g_values[current] > self.rhs_values[current]:
                 self.g_values[current] = self.rhs_values[current]
                 for neighbor, _ in self.graph.get_neighbors(current):
-                    previous_rhs = self.rhs_values.get(neighbor, float("inf"))
                     self._update_vertex(neighbor)
-                    if self.rhs_values[neighbor] != previous_rhs:
-                        updated_nodes.append(neighbor)
-                invalidated = False
             else:
                 self.g_values[current] = float("inf")
-                previous_rhs = self.rhs_values[current]
                 self._update_vertex(current)
-                if self.rhs_values[current] != previous_rhs:
-                    updated_nodes.append(current)
                 for neighbor, _ in self.graph.get_neighbors(current):
-                    previous_rhs = self.rhs_values.get(neighbor, float("inf"))
                     self._update_vertex(neighbor)
-                    if self.rhs_values[neighbor] != previous_rhs:
-                        updated_nodes.append(neighbor)
-                invalidated = True
-
-            self.last_trace.append(
-                DynamicStep(
-                    node=current,
-                    old_distance=old_distance,
-                    new_distance=self.g_values[current],
-                    rhs_value=rhs_value,
-                    invalidated=invalidated,
-                    updated_nodes=tuple(updated_nodes),
-                )
-            )
 
         self.distances = self.g_values.copy()
 

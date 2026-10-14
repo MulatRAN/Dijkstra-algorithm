@@ -17,23 +17,17 @@ from .constants import (
     CARD_RADIUS,
     CONTROL_BG,
     CONTROL_HOVER,
-    CONTROL_HOVER_STRONG,
     CONTROL_RADIUS,
-    DISABLED_TEXT,
-    DISTANCE_UPDATED,
     FONT_BODY,
     FONT_CAPTION,
     FONT_FAMILY,
-    FONT_SECTION,
     FONT_TITLE,
     INK,
     LINE,
     MARKER_RADIUS,
     MUTED,
-    NODE_ACTIVE,
     NODE_START,
     NODE_TARGET,
-    PANEL_BG,
     PATH_BLUE,
     PATH_GREEN,
     PURPLE,
@@ -43,7 +37,6 @@ from .constants import (
     SOFT_TEXT,
     SPACE,
     STATUS_RADIUS,
-    STRONG_MUTED,
     WHITE,
 )
 
@@ -104,7 +97,7 @@ class PanelsMixin:
         )
         app.graph_subtitle = ctk.CTkLabel(
             graph_card,
-            text="Le chemin sélectionné et les étapes de calcul sont mis en évidence.",
+            text="Les chemins classique et dynamique sont affichés en bleu et vert.",
             text_color=MUTED,
             font=ctk.CTkFont(size=FONT_BODY),
             anchor="w",
@@ -127,10 +120,6 @@ class PanelsMixin:
             app._legend_item(legend, "Arrivée", NODE_TARGET, 1, outlined=True),
             app._legend_item(legend, "Dijkstra classique", PATH_BLUE, 2),
             app._legend_item(legend, "Dijkstra dynamique", PATH_GREEN, 3),
-            app._legend_item(legend, "Sommet actif", NODE_ACTIVE, 4, outlined=True),
-            app._legend_item(
-                legend, "Distance mise à jour", DISTANCE_UPDATED, 5, outlined=True
-            ),
         ]
 
         app.graph_summary = ctk.CTkLabel(
@@ -147,17 +136,6 @@ class PanelsMixin:
             padx=CARD_PADDING,
             pady=(SPACE, SPACE * 2),
         )
-        app.graph_play_status = ctk.CTkLabel(
-            graph_card,
-            text="Étape prête à explorer.",
-            text_color=MUTED,
-            font=ctk.CTkFont(size=FONT_CAPTION),
-            anchor="w",
-        )
-        app.graph_play_status.grid(
-            row=7, column=0, sticky="ew", padx=22, pady=(0, 14)
-        )
-
         controls = app._card(workspace)
         app.controls_card = controls
         controls.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
@@ -309,10 +287,7 @@ class PanelsMixin:
         )
         app.comparison_explainer = ctk.CTkLabel(
             comparison,
-            text=(
-                "Temps et travail : finalisations/relâchements côté classique, "
-                "réparations/valeurs rhs côté dynamique."
-            ),
+            text="Comparez les chemins, leur coût et le temps de calcul des deux algorithmes.",
             text_color=MUTED,
             font=ctk.CTkFont(size=10),
             justify="left",
@@ -339,122 +314,6 @@ class PanelsMixin:
             accent=PURPLE,
             result_key="dynamic",
         )
-        playback = app._card(app.content_frame)
-        app.playback_card = playback
-        playback.grid(row=2, column=0, sticky="ew", padx=30, pady=(10, 16))
-        playback.grid_columnconfigure(0, weight=0)
-        playback.grid_columnconfigure(1, weight=1)
-        playback.grid_columnconfigure(2, weight=0)
-        app.playback_title = ctk.CTkLabel(
-            playback,
-            text="4. Explorer le calcul",
-            text_color=INK,
-            font=ctk.CTkFont(size=FONT_SECTION - 2, weight="bold"),
-        )
-        app.playback_title.grid(row=0, column=0, sticky="w", padx=18, pady=(12, 1))
-        app.playback_subtitle = ctk.CTkLabel(
-            playback,
-            text="Suivez les sommets traités et les distances mises à jour.",
-            text_color=MUTED,
-            font=ctk.CTkFont(size=FONT_BODY),
-        )
-        app.playback_subtitle.grid(
-            row=1, column=0, sticky="w", padx=18, pady=(0, 8)
-        )
-        app.trace_menu = ctk.CTkOptionMenu(
-            playback,
-            variable=app.trace_algorithm,
-            values=["Dijkstra classique", "Dijkstra dynamique"],
-            command=app._on_trace_algorithm_changed,
-            width=205,
-            height=32,
-            fg_color=CONTROL_BG,
-            button_color=CONTROL_HOVER,
-            button_hover_color=CONTROL_HOVER_STRONG,
-            text_color=INK,
-            dropdown_text_color=INK,
-        )
-        app.trace_menu.grid(row=0, column=1, rowspan=2, sticky="e", padx=12, pady=10)
-
-        controls = ctk.CTkFrame(playback, fg_color="transparent")
-        app.playback_controls = controls
-        controls.grid(
-            row=0, column=2, rowspan=2, sticky="ew", padx=12, pady=(8, 8)
-        )
-        app.restart_button = ctk.CTkButton(
-            controls,
-            text="⏮ Début",
-            width=100,
-            height=36,
-            command=app._restart_trace,
-            fg_color=CONTROL_BG,
-            hover_color=CONTROL_HOVER,
-            text_color=INK,
-            text_color_disabled=DISABLED_TEXT,
-        )
-        app.previous_button = ctk.CTkButton(
-            controls,
-            text="◀ Précédent",
-            width=128,
-            height=36,
-            command=app._previous_trace_step,
-            fg_color=CONTROL_BG,
-            hover_color=CONTROL_HOVER,
-            text_color=INK,
-            text_color_disabled=DISABLED_TEXT,
-        )
-        app.play_button = ctk.CTkButton(
-            controls,
-            text="▶ Lire",
-            width=102,
-            height=36,
-            command=app._toggle_trace_playback,
-            fg_color=BLUE,
-            hover_color=BLUE_HOVER,
-            text_color=WHITE,
-        )
-        app.next_button = ctk.CTkButton(
-            controls,
-            text="Suivant ▶",
-            width=112,
-            height=36,
-            command=app._next_trace_step,
-            fg_color=CONTROL_BG,
-            hover_color=CONTROL_HOVER,
-            text_color=INK,
-            text_color_disabled=DISABLED_TEXT,
-        )
-        app.playback_button_widgets = [
-            app.restart_button,
-            app.previous_button,
-            app.play_button,
-            app.next_button,
-        ]
-        app.trace_counter = ctk.CTkLabel(
-            controls,
-            text="Étape 0 sur 0",
-            text_color=MUTED,
-            font=ctk.CTkFont(size=11, weight="bold"),
-        )
-        app.trace_counter.grid(row=0, column=4, sticky="e", padx=8)
-        app.trace_explanation = ctk.CTkLabel(
-            playback,
-            text="Choisissez un algorithme puis avancez étape par étape.",
-            text_color=STRONG_MUTED,
-            fg_color=PANEL_BG,
-            corner_radius=STATUS_RADIUS,
-            wraplength=1000,
-            justify="left",
-            anchor="w",
-            padx=12,
-            pady=10,
-            font=ctk.CTkFont(size=11),
-        )
-        app.trace_explanation.grid(
-            row=2, column=0, columnspan=3, sticky="ew", padx=18, pady=(2, 12)
-        )
-        app.playback_mode = ""
-
     @staticmethod
     def _card(
         parent: Union[ctk.CTkBaseClass, ctk.CTkScrollableFrame],
@@ -607,29 +466,11 @@ class PanelsMixin:
             font=ctk.CTkFont(size=11),
         )
         time_label.grid(row=4, column=0, sticky="ew", padx=18, pady=(0, 15))
-        processed_label = ctk.CTkLabel(
-            card,
-            text="Sommets traités · —",
-            text_color=INK,
-            anchor="w",
-            font=ctk.CTkFont(size=11, weight="bold"),
-        )
-        processed_label.grid(row=5, column=0, sticky="ew", padx=18, pady=(0, 2))
-        updates_label = ctk.CTkLabel(
-            card,
-            text="Mises à jour · —",
-            text_color=MUTED,
-            anchor="w",
-            font=ctk.CTkFont(size=10),
-        )
-        updates_label.grid(row=6, column=0, sticky="ew", padx=18, pady=(0, 12))
         labels = {
             "status": status,
             "path": path_label,
             "distance": distance_label,
             "time": time_label,
-            "processed": processed_label,
-            "updates": updates_label,
         }
         if result_key == "classic":
             app.classic_result_labels = labels

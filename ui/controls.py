@@ -126,11 +126,9 @@ class ControlsMixin:
         app.dynamic_time_ms = (time.perf_counter() - dynamic_started) * 1000
         app.change_count += 1
         app.classic_snapshot_outdated = True
-        app.trace_index = 0
-        app._refresh_trace_data()
         app._refresh_edge_options()
         app._refresh_comparison()
-        app._refresh_trace_view()
+        app._draw_graph()
         app._set_control_status(
             f"Modification appliquée : {source} → {dest}."
         )
@@ -140,10 +138,8 @@ class ControlsMixin:
         app.classic_graph = copy_graph(app.graph)
         app._calculate_classic()
         app.classic_snapshot_outdated = False
-        app.trace_index = 0
-        app._refresh_trace_data()
         app._refresh_comparison()
-        app._refresh_trace_view()
+        app._draw_graph()
         app._set_control_status(
             "Dijkstra classique recalculé sur le graphe actuel."
         )
@@ -204,23 +200,6 @@ class ControlsMixin:
         )
         app.dynamic_result_labels["time"].configure(
             text=f"Mesure sur ce graphe · {app.dynamic_time_ms:.4f} ms"
-        )
-        classic_updates = sum(
-            len(step.updated_nodes) for step in app.classic_steps
-        )
-        dynamic_trace = app.dynamic_algorithm.last_trace
-        dynamic_updates = sum(len(step.updated_nodes) for step in dynamic_trace)
-        app.classic_result_labels["processed"].configure(
-            text=f"Sommets finalisés · {len(app.classic_steps)}"
-        )
-        app.classic_result_labels["updates"].configure(
-            text=f"Relâchements réussis · {classic_updates}"
-        )
-        app.dynamic_result_labels["processed"].configure(
-            text=f"Sommets réparés · {len(dynamic_trace)}"
-        )
-        app.dynamic_result_labels["updates"].configure(
-            text=f"Valeurs rhs modifiées · {dynamic_updates}"
         )
         app.graph_summary.configure(
             text=f"{app.graph.get_node_count()} sommets  ·  "

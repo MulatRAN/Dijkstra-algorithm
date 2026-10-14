@@ -18,9 +18,7 @@ Research project exploring dynamic shortest path algorithms that efficiently mai
 │   ├── graph_canvas.py   # Graph drawing and endpoint updates
 │   ├── graph_data.py     # Demo graph construction and copy helpers
 │   ├── layout.py         # Responsive layout helpers
-│   ├── models.py         # Interface presentation models
 │   ├── panels.py         # Interface panel and widget construction
-│   └── trace.py          # Algorithm traces and playback controls
 ├── experiments/           # Experimental framework
 │   ├── scenarios.py       # Graph modification scenarios
 │   └── benchmark.py       # Performance benchmarking
@@ -65,13 +63,8 @@ Choose an edge to change its weight, remove it, or add a directed edge. The grap
 and dynamic shortest path update after each change. Classic Dijkstra keeps its
 initial graph snapshot and its original calculation, ignoring later changes.
 Both paths are displayed at once: classic in blue and dynamic in green.
-Use the step-through controls to play, pause, or inspect each algorithm one
-vertex at a time; the active node and affected vertices are highlighted on the
-graph. The comparison also reports the latest measured runtime and trace
-counters: finalized vertices and successful relaxations for classic Dijkstra,
-and repaired vertices and changed `rhs` values for the dynamic algorithm.
-These counters describe different kinds of work and should be interpreted
-alongside the explanatory labels rather than as identical operations.
+The comparison reports the latest measured runtime. Use “Recalculer Dijkstra
+classique” to run the classic algorithm again on the current graph.
 
 ### Running Tests
 

@@ -12,12 +12,10 @@ from .constants import (
     CANVAS,
     CANVAS_FONT_FAMILY,
     CANVAS_TEXT,
-    DISTANCE_UPDATED,
     EDGE_CONTROL_POSITIONS,
     EDGE_LABEL_POSITIONS,
     EDGE_MUTED,
     FONT_CAPTION,
-    NODE_ACTIVE,
     NODE_HEIGHT,
     NODE_OUTLINE,
     NODE_POSITIONS,
@@ -25,14 +23,10 @@ from .constants import (
     NODE_TARGET,
     NODE_TEXT,
     NODE_WIDTH,
-    ORANGE,
     PATH_BLUE,
     PATH_GREEN,
     START_OUTLINE,
     TARGET_OUTLINE,
-    TRACE_EDGE,
-    VISITED_FILL,
-    VISITED_OUTLINE,
     WHITE,
 )
 
@@ -52,10 +46,8 @@ class GraphCanvasMixin:
                 app.dynamic_algorithm.compute_shortest_paths()
                 app.dynamic_time_ms = (time.perf_counter() - dynamic_started) * 1000
             app._calculate_classic()
-            app.trace_index = 0
-            app._refresh_trace_data()
             app._refresh_comparison()
-            app._refresh_trace_view()
+            app._draw_graph()
 
     def _draw_graph(self, event: Optional[tk.Event] = None) -> None:
         app = cast("DijkstraLab", self)
@@ -78,15 +70,9 @@ class GraphCanvasMixin:
             for node, (x_ratio, y_ratio) in NODE_POSITIONS.items()
             if node in app.graph.nodes
         }
-        trace_step = app._current_trace_step()
         classic_path_edges = set(zip(app.classic_path, app.classic_path[1:]))
         dynamic_path = app.dynamic_algorithm.get_path(app.target_node.get())
         dynamic_path_edges = set(zip(dynamic_path, dynamic_path[1:]))
-        active_node = trace_step.node if trace_step else None
-        updated_nodes = set(trace_step.updated_nodes) if trace_step else set()
-        trace_edges = {
-            (active_node, node) for node in updated_nodes
-        } if active_node else set()
 
         for source in sorted(app.graph.nodes):
             for dest, _ in sorted(app.graph.get_neighbors(source)):
@@ -107,7 +93,6 @@ class GraphCanvasMixin:
                 end_y = y2 - uy * (node_radius + 5)
                 is_classic_edge = (source, dest) in classic_path_edges
                 is_dynamic_edge = (source, dest) in dynamic_path_edges
-                is_trace_edge = (source, dest) in trace_edges
                 control = EDGE_CONTROL_POSITIONS.get((source, dest))
                 has_reverse = app.graph.get_weight(dest, source) is not None
                 edge_control = (
@@ -126,8 +111,8 @@ class GraphCanvasMixin:
                     edge_end,
                     edge_control,
                     has_reverse,
-                    TRACE_EDGE if is_trace_edge else EDGE_MUTED,
-                    3 if is_trace_edge else 1.7,
+                    EDGE_MUTED,
+                    1.7,
                 )
                 shared_path_edge = is_classic_edge and is_dynamic_edge
                 if is_classic_edge:
@@ -189,15 +174,7 @@ class GraphCanvasMixin:
                 )
 
         for node, (x, y) in positions.items():
-            if node == active_node:
-                fill, outline = NODE_ACTIVE, ORANGE
-            elif node in updated_nodes:
-                fill, outline = DISTANCE_UPDATED, TRACE_EDGE
-            elif trace_step and node in trace_step.visited:
-                fill, outline = VISITED_FILL, VISITED_OUTLINE
-            elif node == app.start_node.get() == app.target_node.get():
-                fill, outline = TRACE_EDGE, ORANGE
-            elif node == app.start_node.get():
+            if node == app.start_node.get():
                 fill, outline = NODE_START, START_OUTLINE
             elif node == app.target_node.get():
                 fill, outline = NODE_TARGET, TARGET_OUTLINE

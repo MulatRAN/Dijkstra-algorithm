@@ -12,7 +12,6 @@ from .constants import (
     FONT_TITLE,
     LEGEND_THREE_COLUMN_MIN_WIDTH,
     PAGE_PADDING,
-    PLAYBACK_GRID_MAX_WIDTH,
     WIDE_LAYOUT_MIN_WIDTH,
 )
 
@@ -33,7 +32,6 @@ class LayoutMixin:
         app._resize_after_id = None
         width = app.content_frame.winfo_width()
         workspace_mode = "columns" if width >= WIDE_LAYOUT_MIN_WIDTH else "stack"
-        playback_mode = "row" if width >= PLAYBACK_GRID_MAX_WIDTH else "grid"
         margin = (
             PAGE_PADDING
             if width >= WIDE_LAYOUT_MIN_WIDTH
@@ -44,7 +42,6 @@ class LayoutMixin:
 
         app.header.grid_configure(padx=margin, pady=(12, 8))
         app.workspace.grid_configure(padx=margin)
-        app.playback_card.grid_configure(padx=margin, pady=(10, 16))
         app.header_title.configure(
             font=ctk.CTkFont(
                 size=FONT_TITLE if width >= COMPARISON_COLUMNS_MIN_WIDTH else FONT_TITLE - 5,
@@ -84,14 +81,11 @@ class LayoutMixin:
                     4, weight=0, minsize=CANVAS_STACK_MIN_HEIGHT
                 )
 
-        if playback_mode != app.playback_mode:
-            app.playback_mode = playback_mode
-            app._layout_playback_controls(playback_mode)
         app._layout_legend(
             3
             if width >= LEGEND_THREE_COLUMN_MIN_WIDTH
             else 2
-            if width >= PLAYBACK_GRID_MAX_WIDTH
+            if width >= COMPARISON_COLUMNS_MIN_WIDTH
             else 1
         )
 
@@ -107,9 +101,6 @@ class LayoutMixin:
         app.endpoint_selectors.configure(
             width=max(240, app.controls_card.winfo_width() - 36)
         )
-        app.trace_explanation.configure(
-            wraplength=max(220, app.playback_card.winfo_width() - 48)
-        )
         app.comparison_explainer.configure(
             wraplength=max(220, app.comparison_frame.winfo_width() - 32)
         )
@@ -121,58 +112,6 @@ class LayoutMixin:
         app.graph_subtitle.configure(
             wraplength=max(260, app.graph_card.winfo_width() - 52)
         )
-
-    def _layout_playback_controls(self, mode: str) -> None:
-        app = cast("DijkstraLab", self)
-        for button in app.playback_button_widgets:
-            button.grid_forget()
-        app.trace_counter.grid_forget()
-        for column in range(5):
-            app.playback_controls.grid_columnconfigure(column, weight=0)
-
-        if mode == "row":
-            app.playback_title.grid_configure(row=0, column=0)
-            app.playback_subtitle.grid_configure(row=1, column=0)
-            app.trace_menu.grid_configure(
-                row=0, column=1, columnspan=1, rowspan=2, sticky="e"
-            )
-            app.playback_controls.grid_configure(
-                row=0, column=2, columnspan=1, rowspan=2, sticky="ew"
-            )
-            app.trace_explanation.grid_configure(row=2, column=0, columnspan=3)
-            widths = (100, 128, 102, 112)
-            for column, (button, width) in enumerate(
-                zip(app.playback_button_widgets, widths)
-            ):
-                button.configure(width=width)
-                button.grid(row=0, column=column, padx=3, sticky="ew")
-            app.playback_controls.grid_columnconfigure(4, weight=1)
-            app.trace_counter.grid(row=0, column=4, sticky="e", padx=(8, 4))
-        else:
-            app.playback_title.grid_configure(row=0, column=0)
-            app.playback_subtitle.grid_configure(row=1, column=0)
-            app.trace_menu.grid_configure(
-                row=2, column=0, columnspan=3, rowspan=1, sticky="ew", padx=18
-            )
-            app.playback_controls.grid_configure(
-                row=3, column=0, columnspan=3, rowspan=1, sticky="ew"
-            )
-            app.trace_explanation.grid_configure(
-                row=4, column=0, columnspan=3, sticky="ew"
-            )
-            app.playback_controls.grid_columnconfigure(0, weight=1)
-            app.playback_controls.grid_columnconfigure(1, weight=1)
-            app.restart_button.configure(width=140)
-            app.previous_button.configure(width=140)
-            app.play_button.configure(width=140)
-            app.next_button.configure(width=140)
-            app.restart_button.grid(row=0, column=0, padx=3, pady=3, sticky="ew")
-            app.previous_button.grid(row=0, column=1, padx=3, pady=3, sticky="ew")
-            app.play_button.grid(row=1, column=0, padx=3, pady=3, sticky="ew")
-            app.next_button.grid(row=1, column=1, padx=3, pady=3, sticky="ew")
-            app.trace_counter.grid(
-                row=2, column=0, columnspan=2, sticky="w", padx=4, pady=(2, 4)
-            )
 
     def _layout_legend(self, columns: int) -> None:
         app = cast("DijkstraLab", self)
