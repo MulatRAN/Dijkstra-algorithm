@@ -3,9 +3,7 @@
 import math
 import time
 import tkinter as tk
-from typing import List, Optional, Tuple
-
-import customtkinter as ctk
+from typing import List, Optional, Tuple, TYPE_CHECKING, cast
 
 from src.dynamic_algo import DynamicDijkstra
 
@@ -37,28 +35,33 @@ from .constants import (
     WHITE,
 )
 
+if TYPE_CHECKING:
+    from .app import DijkstraLab
+
 class GraphCanvasMixin:
     def _on_endpoint_selected(self, selected_node: str) -> None:
-        if selected_node in self.graph.nodes:
-            if self.start_node.get() != self.dynamic_algorithm.start:
-                self.dynamic_graph = copy_graph(self.graph)
-                self.dynamic_algorithm = DynamicDijkstra(
-                    self.dynamic_graph, self.start_node.get()
+        app = cast("DijkstraLab", self)
+        if selected_node in app.graph.nodes:
+            if app.start_node.get() != app.dynamic_algorithm.start:
+                app.dynamic_graph = copy_graph(app.graph)
+                app.dynamic_algorithm = DynamicDijkstra(
+                    app.dynamic_graph, app.start_node.get()
                 )
                 dynamic_started = time.perf_counter()
-                self.dynamic_algorithm.compute_shortest_paths()
-                self.dynamic_time_ms = (time.perf_counter() - dynamic_started) * 1000
-            self._calculate_classic()
-            self.trace_index = 0
-            self._refresh_trace_data()
-            self._refresh_comparison()
-            self._refresh_trace_view()
+                app.dynamic_algorithm.compute_shortest_paths()
+                app.dynamic_time_ms = (time.perf_counter() - dynamic_started) * 1000
+            app._calculate_classic()
+            app.trace_index = 0
+            app._refresh_trace_data()
+            app._refresh_comparison()
+            app._refresh_trace_view()
 
     def _draw_graph(self, event: Optional[tk.Event] = None) -> None:
+        app = cast("DijkstraLab", self)
         if not hasattr(self, "graph_canvas"):
             return
 
-        canvas = self.graph_canvas
+        canvas = app.graph_canvas
         canvas.delete("all")
         width = max(event.width if event else canvas.winfo_width(), 1)
         height = max(event.height if event else canvas.winfo_height(), 1)
@@ -72,13 +75,13 @@ class GraphCanvasMixin:
                 pad_y + y_ratio * max(height - 2 * pad_y, 1),
             )
             for node, (x_ratio, y_ratio) in NODE_POSITIONS.items()
-            if node in self.graph.nodes
+            if node in app.graph.nodes
         }
-        trace_step = self._current_trace_step()
+        trace_step = app._current_trace_step()
         path = (
-            self.classic_path
-            if self.trace_algorithm.get() == "Dijkstra classique"
-            else self.dynamic_algorithm.get_path(self.target_node.get())
+            app.classic_path
+            if app.trace_algorithm.get() == "Dijkstra classique"
+            else app.dynamic_algorithm.get_path(app.target_node.get())
         )
         path_edges = set(zip(path, path[1:]))
         active_node = trace_step.node if trace_step else None
@@ -87,8 +90,8 @@ class GraphCanvasMixin:
             (active_node, node) for node in updated_nodes
         } if active_node else set()
 
-        for source in sorted(self.graph.nodes):
-            for dest, _ in sorted(self.graph.get_neighbors(source)):
+        for source in sorted(app.graph.nodes):
+            for dest, _ in sorted(app.graph.get_neighbors(source)):
                 if source not in positions or dest not in positions:
                     continue
                 x1, y1 = positions[source]
@@ -112,7 +115,7 @@ class GraphCanvasMixin:
                 )
                 line_width = 3 if is_path_edge or is_trace_edge else 1.7
                 control = EDGE_CONTROL_POSITIONS.get((source, dest))
-                has_reverse = self.graph.get_weight(dest, source) is not None
+                has_reverse = app.graph.get_weight(dest, source) is not None
                 if control is None:
                     if has_reverse:
                         normal_x, normal_y = -uy, ux
@@ -121,7 +124,7 @@ class GraphCanvasMixin:
                     else:
                         control_x = control_y = 0
                     if has_reverse:
-                        points = self._curve_points(
+                        points = app._curve_points(
                             (start_x, start_y),
                             (control_x, control_y),
                             (end_x, end_y),
@@ -148,7 +151,7 @@ class GraphCanvasMixin:
                 else:
                     control_x = pad_x + control[0] * max(width - 2 * pad_x, 1)
                     control_y = pad_y + control[1] * max(height - 2 * pad_y, 1)
-                    points = self._curve_points(
+                    points = app._curve_points(
                         (start_x, start_y),
                         (control_x, control_y),
                         (end_x, end_y),
@@ -163,8 +166,8 @@ class GraphCanvasMixin:
                         splinesteps=20,
                     )
 
-        for source in sorted(self.graph.nodes):
-            for dest, weight in sorted(self.graph.get_neighbors(source)):
+        for source in sorted(app.graph.nodes):
+            for dest, weight in sorted(app.graph.get_neighbors(source)):
                 if source not in positions or dest not in positions:
                     continue
                 label_position = EDGE_LABEL_POSITIONS.get((source, dest))
@@ -172,7 +175,7 @@ class GraphCanvasMixin:
                     x1, y1 = positions[source]
                     x2, y2 = positions[dest]
                     label_x, label_y = (x1 + x2) / 2, (y1 + y2) / 2
-                    if self.graph.get_weight(dest, source) is not None:
+                    if app.graph.get_weight(dest, source) is not None:
                         dx, dy = x2 - x1, y2 - y1
                         length = max((dx * dx + dy * dy) ** 0.5, 1)
                         label_x += -dy / length * 24
@@ -205,15 +208,15 @@ class GraphCanvasMixin:
                 fill, outline = DISTANCE_UPDATED, TRACE_EDGE
             elif trace_step and node in trace_step.visited:
                 fill, outline = VISITED_FILL, VISITED_OUTLINE
-            elif node == self.start_node.get() == self.target_node.get():
+            elif node == app.start_node.get() == app.target_node.get():
                 fill, outline = TRACE_EDGE, ORANGE
-            elif node == self.start_node.get():
+            elif node == app.start_node.get():
                 fill, outline = NODE_START, START_OUTLINE
-            elif node == self.target_node.get():
+            elif node == app.target_node.get():
                 fill, outline = NODE_TARGET, TARGET_OUTLINE
             else:
                 fill, outline = WHITE, NODE_OUTLINE
-            distance = self.classic_distances.get(node, float("inf"))
+            distance = app.classic_distances.get(node, float("inf"))
             distance_text = f"{distance:g}" if math.isfinite(distance) else "∞"
             canvas.create_oval(
                 x - node_width / 2,
@@ -235,10 +238,10 @@ class GraphCanvasMixin:
                 ),
             )
 
-        self.graph_summary.configure(
-            text=f"{self.graph.get_node_count()} sommets  ·  "
-            f"{self.graph.get_edge_count()} arêtes  ·  "
-            f"{self.start_node.get()} → {self.target_node.get()}"
+        app.graph_summary.configure(
+            text=f"{app.graph.get_node_count()} sommets  ·  "
+            f"{app.graph.get_edge_count()} arêtes  ·  "
+            f"{app.start_node.get()} → {app.target_node.get()}"
         )
 
     @staticmethod

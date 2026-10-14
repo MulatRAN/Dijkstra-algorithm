@@ -62,8 +62,8 @@ python app.py
 
 The app opens on the directed sample graph used in this README's basic example.
 Choose an edge to change its weight, remove it, or add a directed edge. The graph
-and shortest path update alongside a comparison of classic full recomputation
-and the dynamic algorithm's incremental update.
+and dynamic shortest path update after each change. Classic Dijkstra keeps its
+initial graph snapshot and its original calculation, ignoring later changes.
 Use the step-through controls to play, pause, or inspect each algorithm one
 vertex at a time; the active node and affected vertices are highlighted on the
 graph. The comparison also reports the latest measured runtime and trace

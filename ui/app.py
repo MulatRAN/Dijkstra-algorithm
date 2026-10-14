@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+import tkinter as tk
 from typing import Dict, List, Optional, Tuple
 
 import customtkinter as ctk
@@ -33,9 +34,51 @@ class DijkstraLab(
     GraphCanvasMixin,
     ctk.CTk,
 ):
+    header: ctk.CTkBaseClass
+    header_title: ctk.CTkBaseClass
+    header_subtitle: ctk.CTkBaseClass
+    header_badge: ctk.CTkBaseClass
+    workspace: ctk.CTkBaseClass
+    graph_card: ctk.CTkBaseClass
+    graph_subtitle: ctk.CTkBaseClass
+    graph_canvas: tk.Canvas
+    legend_frame: ctk.CTkBaseClass
+    legend_items: List[ctk.CTkBaseClass]
+    graph_summary: ctk.CTkBaseClass
+    graph_play_status: ctk.CTkBaseClass
+    controls_card: ctk.CTkBaseClass
+    controls_subtitle: ctk.CTkBaseClass
+    endpoint_selectors: ctk.CTkBaseClass
+    edge_label: ctk.CTkBaseClass
+    edge_menu: ctk.CTkOptionMenu
+    weight_label: ctk.CTkBaseClass
+    weight_entry: ctk.CTkBaseClass
+    apply_button: ctk.CTkBaseClass
+    change_status: ctk.CTkBaseClass
+    comparison_frame: ctk.CTkBaseClass
+    comparison_heading: ctk.CTkBaseClass
+    comparison_explainer: ctk.CTkBaseClass
+    algorithm_cards: List[ctk.CTkFrame]
+    _algorithm_path_labels: List[ctk.CTkLabel]
+    classic_result_labels: Dict[str, ctk.CTkLabel]
+    dynamic_result_labels: Dict[str, ctk.CTkLabel]
+    playback_card: ctk.CTkBaseClass
+    playback_title: ctk.CTkBaseClass
+    playback_subtitle: ctk.CTkBaseClass
+    trace_menu: ctk.CTkBaseClass
+    playback_controls: ctk.CTkBaseClass
+    restart_button: ctk.CTkButton
+    previous_button: ctk.CTkButton
+    play_button: ctk.CTkButton
+    next_button: ctk.CTkButton
+    playback_button_widgets: List[ctk.CTkButton]
+    trace_counter: ctk.CTkBaseClass
+    trace_explanation: ctk.CTkBaseClass
+
     def __init__(self) -> None:
         super().__init__()
         self.graph = build_demo_graph()
+        self.classic_graph = copy_graph(self.graph)
         self.nodes = sorted(self.graph.nodes)
         self.start_node = ctk.StringVar(value=self.nodes[0])
         self.target_node = ctk.StringVar(value=self.nodes[-1])
@@ -94,7 +137,7 @@ class DijkstraLab(
     def _calculate_classic(self) -> None:
         started = time.perf_counter()
         self.classic_distances, self.classic_predecessors = dijkstra(
-            self.graph, self.start_node.get()
+            self.classic_graph, self.start_node.get()
         )
         self.classic_time_ms = (time.perf_counter() - started) * 1000
         self.classic_path = reconstruct_path(
