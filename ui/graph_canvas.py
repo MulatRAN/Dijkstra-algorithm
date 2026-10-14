@@ -27,6 +27,7 @@ from .constants import (
     NODE_WIDTH,
     ORANGE,
     PATH_BLUE,
+    PATH_GREEN,
     START_OUTLINE,
     TARGET_OUTLINE,
     TRACE_EDGE,
@@ -78,12 +79,9 @@ class GraphCanvasMixin:
             if node in app.graph.nodes
         }
         trace_step = app._current_trace_step()
-        path = (
-            app.classic_path
-            if app.trace_algorithm.get() == "Dijkstra classique"
-            else app.dynamic_algorithm.get_path(app.target_node.get())
-        )
-        path_edges = set(zip(path, path[1:]))
+        classic_path_edges = set(zip(app.classic_path, app.classic_path[1:]))
+        dynamic_path = app.dynamic_algorithm.get_path(app.target_node.get())
+        dynamic_path_edges = set(zip(dynamic_path, dynamic_path[1:]))
         active_node = trace_step.node if trace_step else None
         updated_nodes = set(trace_step.updated_nodes) if trace_step else set()
         trace_edges = {
@@ -107,63 +105,52 @@ class GraphCanvasMixin:
                 start_y = y1 + uy * node_radius
                 end_x = x2 - ux * (node_radius + 5)
                 end_y = y2 - uy * (node_radius + 5)
-                is_path_edge = (source, dest) in path_edges
+                is_classic_edge = (source, dest) in classic_path_edges
+                is_dynamic_edge = (source, dest) in dynamic_path_edges
                 is_trace_edge = (source, dest) in trace_edges
-                color = (
-                    TRACE_EDGE if is_trace_edge else
-                    PATH_BLUE if is_path_edge else EDGE_MUTED
-                )
-                line_width = 3 if is_path_edge or is_trace_edge else 1.7
                 control = EDGE_CONTROL_POSITIONS.get((source, dest))
                 has_reverse = app.graph.get_weight(dest, source) is not None
-                if control is None:
-                    if has_reverse:
-                        normal_x, normal_y = -uy, ux
-                        control_x = (start_x + end_x) / 2 + normal_x * 20
-                        control_y = (start_y + end_y) / 2 + normal_y * 20
-                    else:
-                        control_x = control_y = 0
-                    if has_reverse:
-                        points = app._curve_points(
-                            (start_x, start_y),
-                            (control_x, control_y),
-                            (end_x, end_y),
-                        )
-                        canvas.create_line(
-                            *[coordinate for point in points for coordinate in point],
-                            fill=color,
-                            width=line_width,
-                            arrow=tk.LAST,
-                            arrowshape=(10, 12, 5),
-                            smooth=True,
-                        )
-                    else:
-                        canvas.create_line(
-                            start_x,
-                            start_y,
-                            end_x,
-                            end_y,
-                            fill=color,
-                            width=line_width,
-                            arrow=tk.LAST,
-                            arrowshape=(10, 12, 5),
-                        )
-                else:
-                    control_x = pad_x + control[0] * max(width - 2 * pad_x, 1)
-                    control_y = pad_y + control[1] * max(height - 2 * pad_y, 1)
-                    points = app._curve_points(
-                        (start_x, start_y),
-                        (control_x, control_y),
-                        (end_x, end_y),
+                edge_control = (
+                    (
+                        pad_x + control[0] * max(width - 2 * pad_x, 1),
+                        pad_y + control[1] * max(height - 2 * pad_y, 1),
                     )
-                    canvas.create_line(
-                        *[coordinate for point in points for coordinate in point],
-                        fill=color,
-                        width=line_width,
-                        arrow=tk.LAST,
-                        arrowshape=(10, 12, 5),
-                        smooth=True,
-                        splinesteps=20,
+                    if control is not None
+                    else None
+                )
+                edge_start = (start_x, start_y)
+                edge_end = (end_x, end_y)
+                app._draw_directed_edge(
+                    canvas,
+                    edge_start,
+                    edge_end,
+                    edge_control,
+                    has_reverse,
+                    TRACE_EDGE if is_trace_edge else EDGE_MUTED,
+                    3 if is_trace_edge else 1.7,
+                )
+                shared_path_edge = is_classic_edge and is_dynamic_edge
+                if is_classic_edge:
+                    app._draw_directed_edge(
+                        canvas,
+                        edge_start,
+                        edge_end,
+                        edge_control,
+                        has_reverse,
+                        PATH_BLUE,
+                        3,
+                        -2.5 if shared_path_edge else 0,
+                    )
+                if is_dynamic_edge:
+                    app._draw_directed_edge(
+                        canvas,
+                        edge_start,
+                        edge_end,
+                        edge_control,
+                        has_reverse,
+                        PATH_GREEN,
+                        3,
+                        2.5 if shared_path_edge else 0,
                     )
 
         for source in sorted(app.graph.nodes):
@@ -243,6 +230,54 @@ class GraphCanvasMixin:
             f"{app.graph.get_edge_count()} arêtes  ·  "
             f"{app.start_node.get()} → {app.target_node.get()}"
         )
+
+    @staticmethod
+    def _draw_directed_edge(
+        canvas: tk.Canvas,
+        start: Tuple[float, float],
+        end: Tuple[float, float],
+        control: Optional[Tuple[float, float]],
+        has_reverse: bool,
+        color: str,
+        width: float,
+        offset: float = 0,
+    ) -> None:
+        dx, dy = end[0] - start[0], end[1] - start[1]
+        length = max((dx * dx + dy * dy) ** 0.5, 1)
+        normal = (-dy / length * offset, dx / length * offset)
+        shifted_start = (start[0] + normal[0], start[1] + normal[1])
+        shifted_end = (end[0] + normal[0], end[1] + normal[1])
+
+        if control is None and not has_reverse:
+            coordinates = (*shifted_start, *shifted_end)
+            smooth = False
+            splinesteps = None
+        else:
+            if control is None:
+                control = (
+                    (start[0] + end[0]) / 2 - dy / length * 20,
+                    (start[1] + end[1]) / 2 + dx / length * 20,
+                )
+            shifted_control = (control[0] + normal[0], control[1] + normal[1])
+            curve_points = GraphCanvasMixin._curve_points(
+                shifted_start, shifted_control, shifted_end
+            )
+            coordinates = tuple(
+                coordinate for point in curve_points for coordinate in point
+            )
+            smooth = True
+            splinesteps = 20
+
+        options = {
+            "fill": color,
+            "width": width,
+            "arrow": tk.LAST,
+            "arrowshape": (10, 12, 5),
+            "smooth": smooth,
+        }
+        if splinesteps is not None:
+            options["splinesteps"] = splinesteps
+        canvas.create_line(*coordinates, **options)
 
     @staticmethod
     def _curve_points(

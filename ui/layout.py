@@ -176,7 +176,7 @@ class LayoutMixin:
 
     def _layout_legend(self, columns: int) -> None:
         app = cast("DijkstraLab", self)
-        for column in range(5):
+        for column in range(len(app.legend_items)):
             app.legend_frame.grid_columnconfigure(column, weight=0)
         for column in range(columns):
             app.legend_frame.grid_columnconfigure(column, weight=1)

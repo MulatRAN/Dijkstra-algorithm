@@ -35,6 +35,7 @@ from .constants import (
     NODE_TARGET,
     PANEL_BG,
     PATH_BLUE,
+    PATH_GREEN,
     PURPLE,
     SELECTOR_BG,
     SELECTOR_BUTTON,
@@ -124,10 +125,11 @@ class PanelsMixin:
         app.legend_items = [
             app._legend_item(legend, "Départ", NODE_START, 0),
             app._legend_item(legend, "Arrivée", NODE_TARGET, 1, outlined=True),
-            app._legend_item(legend, "Chemin optimal", PATH_BLUE, 2),
-            app._legend_item(legend, "Sommet actif", NODE_ACTIVE, 3, outlined=True),
+            app._legend_item(legend, "Dijkstra classique", PATH_BLUE, 2),
+            app._legend_item(legend, "Dijkstra dynamique", PATH_GREEN, 3),
+            app._legend_item(legend, "Sommet actif", NODE_ACTIVE, 4, outlined=True),
             app._legend_item(
-                legend, "Distance mise à jour", DISTANCE_UPDATED, 4, outlined=True
+                legend, "Distance mise à jour", DISTANCE_UPDATED, 5, outlined=True
             ),
         ]
 
