@@ -5,6 +5,7 @@ import time
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, cast
 
 from src.graph import DynamicGraph
+from .graph_data import copy_graph
 from .constants import BLUE, BLUE_HOVER, BORDER_SOFT, ERROR, MUTED, SOFT_TEXT, WHITE
 
 if TYPE_CHECKING:
@@ -124,6 +125,7 @@ class ControlsMixin:
         app.dynamic_algorithm.handle_edge_weight_change(source, dest, new_weight)
         app.dynamic_time_ms = (time.perf_counter() - dynamic_started) * 1000
         app.change_count += 1
+        app.classic_snapshot_outdated = True
         app.trace_index = 0
         app._refresh_trace_data()
         app._refresh_edge_options()
@@ -131,6 +133,19 @@ class ControlsMixin:
         app._refresh_trace_view()
         app._set_control_status(
             f"Modification appliquée : {source} → {dest}."
+        )
+
+    def _recalculate_classic(self) -> None:
+        app = cast("DijkstraLab", self)
+        app.classic_graph = copy_graph(app.graph)
+        app._calculate_classic()
+        app.classic_snapshot_outdated = False
+        app.trace_index = 0
+        app._refresh_trace_data()
+        app._refresh_comparison()
+        app._refresh_trace_view()
+        app._set_control_status(
+            "Dijkstra classique recalculé sur le graphe actuel."
         )
 
     def _refresh_comparison(self) -> None:
@@ -142,7 +157,11 @@ class ControlsMixin:
 
         if app.change_count:
             app.classic_result_labels["status"].configure(
-                text="Modification · graphe initial conservé"
+                text=(
+                    "Modification · graphe initial conservé"
+                    if app.classic_snapshot_outdated
+                    else "Recalculé · graphe actuel"
+                )
             )
             app.dynamic_result_labels["status"].configure(
                 text="Modification · mise à jour incrémentale"
@@ -179,7 +198,7 @@ class ControlsMixin:
         app.classic_result_labels["time"].configure(
             text=(
                 f"Mesure sur le graphe initial · {app.classic_time_ms:.4f} ms"
-                if app.change_count
+                if app.classic_snapshot_outdated
                 else f"Mesure sur ce graphe · {app.classic_time_ms:.4f} ms"
             )
         )

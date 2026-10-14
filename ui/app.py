@@ -62,6 +62,8 @@ class DijkstraLab(
     _algorithm_path_labels: List[ctk.CTkLabel]
     classic_result_labels: Dict[str, ctk.CTkLabel]
     dynamic_result_labels: Dict[str, ctk.CTkLabel]
+    classic_snapshot_outdated: bool
+    recalculate_classic_button: ctk.CTkButton
     playback_card: ctk.CTkBaseClass
     playback_title: ctk.CTkBaseClass
     playback_subtitle: ctk.CTkBaseClass
@@ -89,6 +91,7 @@ class DijkstraLab(
         self.classic_distances: Dict[str, float] = {}
         self.classic_predecessors: Dict[str, Optional[str]] = {}
         self.classic_path: List[str] = []
+        self.classic_snapshot_outdated = False
         self.classic_time_ms = 0.0
         self.dynamic_time_ms = 0.0
         self.dynamic_graph = copy_graph(self.graph)

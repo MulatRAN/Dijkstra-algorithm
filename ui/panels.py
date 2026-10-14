@@ -272,6 +272,20 @@ class PanelsMixin:
             wraplength=280,
         )
         app.change_status.grid(
+            row=10, column=0, columnspan=2, sticky="ew", padx=18, pady=(0, 5)
+        )
+        app.recalculate_classic_button = ctk.CTkButton(
+            controls,
+            text="Recalculer Dijkstra classique",
+            command=app._recalculate_classic,
+            fg_color=CONTROL_BG,
+            hover_color=CONTROL_HOVER,
+            text_color=INK,
+            height=36,
+            corner_radius=STATUS_RADIUS,
+            font=ctk.CTkFont(size=FONT_CAPTION, weight="bold"),
+        )
+        app.recalculate_classic_button.grid(
             row=9, column=0, columnspan=2, sticky="ew", padx=18, pady=(0, 5)
         )
         app._refresh_edge_options()
