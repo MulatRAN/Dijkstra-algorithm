@@ -1,31 +1,58 @@
-import heapq
+from src.graph import DynamicGraph
+from src.dijkstra import dijkstra, reconstruct_path
+from src.dynamic_algo import DynamicDijkstra
 
-graph = {
-    'A': [(4, 'B'), (2, 'C')],
-    'B': [(4, 'A'), (1, 'C'), (5, 'D')],
-    'C': [(2, 'A'), (1, 'B'), (8, 'D')],
-    'D': [(5, 'B'), (8, 'C'), (3, 'E')],
-    'E': [(3, 'D')]
-}
 
-def get_neighbors(node):
-    return graph.get(node, [])
+def afficher_resultats(titre, graph, start, end, dynamique):
+    distances_classique, predecesseurs_classique = dijkstra(graph, start, end)
+    chemin_classique = reconstruct_path(predecesseurs_classique, start, end)
 
-print(get_neighbors('A'))
+    print(f"\n{titre}")
+    print("classique:")
+    print(f"  chemin: {chemin_classique}")
+    print(f"  distance: {distances_classique[end]}")
 
-# file = []
+    print("dynamique:")
+    print(f"  chemin: {dynamique.get_path(end)}")
+    print(f"  distance: {dynamique.distances[end]}")
 
-# dist = [
-#     (0, 'A'),
-#     (float('inf'), 'B'),
-#     (float('inf'), 'C'),
-#     (float('inf'), 'D'),
-#     (float('inf'), 'E')
-# ]
 
-# for d in dist:
-#     heapq.heappush(file, d)
-    
-# print(file)
-# print(heapq.heappop(file))
-# print(file)
+def main():
+    start = "S"
+    end = "T"
+
+    graph = DynamicGraph()
+    for node in ["S", "A", "B", "T"]:
+        graph.add_node(node)
+
+    graph.add_edge("S", "B", 1)
+    graph.add_edge("S", "A", 2)
+    graph.add_edge("B", "T", 3)
+    graph.add_edge("A", "T", 3)
+
+    dynamique = DynamicDijkstra(graph, start)
+    dynamique.compute_shortest_paths()
+
+    afficher_resultats(
+        "Test 1 - calcul initial, sans changement du graphe",
+        graph,
+        start,
+        end,
+        dynamique,
+    )
+
+    print("\nModification pendant le scénario: le poids de B -> T passe de 3 à 4.")
+    dynamique.handle_edge_weight_change("B", "T", 4)
+
+    # Le classique ne conserve pas d'etat incremental : on le relance depuis start.
+    afficher_resultats(
+        "Test 2 - apres modification du poids",
+        graph,
+        start,
+        end,
+        dynamique,
+    )
+
+
+if __name__ == "__main__":
+    main()

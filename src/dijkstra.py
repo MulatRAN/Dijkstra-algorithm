@@ -22,12 +22,17 @@ def dijkstra(
         distances: Dict mapping node to shortest distance from start
         predecessors: Dict mapping node to predecessor in shortest path
     """
-    distances: Dict[str, float] = {node: float('inf') for node in graph.nodes}
-    predecessors: Dict[str, Optional[str]] = {node: None for node in graph.nodes}
-    distances[start] = 0
+    nodes = tuple(graph.nodes)
+    adjacency = {
+        node: tuple(graph.get_neighbors(node))
+        for node in nodes
+    }
+    distances: Dict[str, float] = {node: float('inf') for node in nodes}
+    predecessors: Dict[str, Optional[str]] = {node: None for node in nodes}
+    distances[start] = 0.0
 
     # Priority queue: (distance, node)
-    pq = [(0, start)]
+    pq: List[Tuple[float, str]] = [(0.0, start)]
     visited = set()
 
     while pq:
@@ -47,7 +52,7 @@ def dijkstra(
             continue
 
         # Check all neighbors
-        for neighbor, weight in graph.get_neighbors(current):
+        for neighbor, weight in adjacency.get(current, ()):
             distance = current_dist + weight
 
             if distance < distances[neighbor]:

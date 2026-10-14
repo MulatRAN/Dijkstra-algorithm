@@ -151,6 +151,7 @@ plot_performance_comparison(results, title="Performance Comparison")
 ### Classic Dijkstra
 - Standard implementation with priority queue
 - O((V + E) log V) complexity
+- Takes a graph snapshot when each calculation starts and ignores later graph changes
 - Full recomputation on every graph change
 
 ### Dynamic Algorithm
