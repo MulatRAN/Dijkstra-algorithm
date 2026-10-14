@@ -35,8 +35,8 @@ class Benchmark:
         self,
         graph: DynamicGraph,
         scenario: ChangeScenario,
-        start_node: int,
-        target_node: int,
+        start_node: str,
+        target_node: str,
         num_runs: int = 10
     ) -> BenchmarkResult:
         """
@@ -110,7 +110,7 @@ class Benchmark:
 
     def run_batch(
         self,
-        graphs: List[Tuple[DynamicGraph, int, int]],
+        graphs: List[Tuple[DynamicGraph, str, str]],
         scenarios: List[ChangeScenario],
         num_runs: int = 10
     ) -> List[BenchmarkResult]:

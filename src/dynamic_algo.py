@@ -1,134 +1,183 @@
 """
 Dynamic Shortest Path Algorithms
-Implements incremental updates without full recomputation
+Maintains shortest paths incrementally after directed edge changes.
 """
-from typing import Dict, List, Tuple, Optional, Set
 import heapq
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Set, Tuple
+
 from .graph import DynamicGraph
 
 
-class DynamicDijkstra:
-    """
-    Dynamic shortest path algorithm
-    Maintains shortest paths efficiently under graph modifications
-    Inspired by D* Lite and LPA* approaches
-    """
+@dataclass(frozen=True)
+class DynamicStep:
+    """One vertex processed while repairing the incremental shortest paths."""
 
-    def __init__(self, graph: DynamicGraph, start: int):
+    node: str
+    old_distance: float
+    new_distance: float
+    rhs_value: float
+    invalidated: bool
+    updated_nodes: Tuple[str, ...]
+
+
+class DynamicDijkstra:
+    """Lifelong Planning A* style incremental single-source shortest paths."""
+
+    def __init__(self, graph: DynamicGraph, start: str):
+        if start not in graph.nodes:
+            raise ValueError(f"Start node {start!r} is not in the graph")
+
         self.graph = graph
         self.start = start
-        self.distances: Dict[int, float] = {}
-        self.predecessors: Dict[int, Optional[int]] = {}
-        self.g_values: Dict[int, float] = {}  # Current best distances
-        self.rhs_values: Dict[int, float] = {}  # One-step lookahead values
-        self.open_list: List[Tuple[Tuple[float, float], int]] = []
+        self.distances: Dict[str, float] = {}
+        self.predecessors: Dict[str, Optional[str]] = {}
+        self.g_values: Dict[str, float] = {}
+        self.rhs_values: Dict[str, float] = {}
+        self.open_list: List[Tuple[Tuple[float, float], str, int]] = []
+        self._queue_versions: Dict[str, int] = {}
+        self._queued: Set[str] = set()
+        self.last_trace: List[DynamicStep] = []
         self._initialize()
 
     def _initialize(self) -> None:
-        """Initialize data structures"""
-        for node in self.graph.nodes:
-            self.g_values[node] = float('inf')
-            self.rhs_values[node] = float('inf')
-            self.predecessors[node] = None
-
+        """Initialize the LPA* state for every graph node."""
+        self.g_values = {node: float("inf") for node in self.graph.nodes}
+        self.rhs_values = {node: float("inf") for node in self.graph.nodes}
+        self.predecessors = {node: None for node in self.graph.nodes}
+        self._queue_versions = {node: 0 for node in self.graph.nodes}
+        self._queued.clear()
+        self.open_list.clear()
         self.rhs_values[self.start] = 0
-        self.open_list = []
-        heapq.heappush(self.open_list, (self._calculate_key(self.start), self.start))
+        self._enqueue(self.start)
 
-    def _calculate_key(self, node: int) -> Tuple[float, float]:
-        """Calculate priority key for node (similar to LPA*)"""
-        g = self.g_values[node]
-        rhs = self.rhs_values[node]
-        return (min(g, rhs), min(g, rhs))
+    def _calculate_key(self, node: str) -> Tuple[float, float]:
+        value = min(self.g_values[node], self.rhs_values[node])
+        return value, value
 
-    def _update_vertex(self, node: int) -> None:
-        """Update vertex and priority queue"""
-        if node != self.start:
-            # Update rhs value based on predecessors
-            min_rhs = float('inf')
-            for pred in self.graph.nodes:
-                weight = self.graph.get_weight(pred, node)
-                if weight is not None:
-                    candidate = self.g_values[pred] + weight
-                    if candidate < min_rhs:
-                        min_rhs = candidate
-            self.rhs_values[node] = min_rhs
-
-        # Remove from open list if present (simplified approach)
+    def _enqueue(self, node: str) -> None:
+        version = self._queue_versions.get(node, 0) + 1
+        self._queue_versions[node] = version
         if self.g_values[node] != self.rhs_values[node]:
-            heapq.heappush(self.open_list, (self._calculate_key(node), node))
+            heapq.heappush(
+                self.open_list,
+                (self._calculate_key(node), node, version),
+            )
+            self._queued.add(node)
+        else:
+            self._queued.discard(node)
+
+    def _update_vertex(self, node: str) -> None:
+        """Recalculate a vertex's one-step lookahead and queue membership."""
+        if node not in self.graph.nodes:
+            return
+        if node not in self.g_values:
+            self.g_values[node] = float("inf")
+            self.rhs_values[node] = float("inf")
+            self.predecessors[node] = None
+            self._queue_versions[node] = 0
+
+        if node == self.start:
+            self.rhs_values[node] = 0
+            self.predecessors[node] = None
+        else:
+            best_distance = float("inf")
+            best_predecessor: Optional[str] = None
+            for predecessor in sorted(self.graph.nodes):
+                weight = self.graph.get_weight(predecessor, node)
+                if weight is None:
+                    continue
+                candidate = self.g_values.get(predecessor, float("inf")) + weight
+                if candidate < best_distance:
+                    best_distance = candidate
+                    best_predecessor = predecessor
+            self.rhs_values[node] = best_distance
+            self.predecessors[node] = best_predecessor
+
+        self._enqueue(node)
 
     def compute_shortest_paths(self) -> None:
-        """Compute or update shortest paths"""
+        """Process inconsistent vertices until all shortest paths are current."""
+        self.last_trace = []
         while self.open_list:
-            _, current = heapq.heappop(self.open_list)
+            _, current, version = heapq.heappop(self.open_list)
+            if version != self._queue_versions.get(current):
+                continue
+            self._queued.discard(current)
 
+            old_distance = self.g_values[current]
+            rhs_value = self.rhs_values[current]
+            updated_nodes = []
             if self.g_values[current] > self.rhs_values[current]:
-                # Vertex is locally inconsistent - update
                 self.g_values[current] = self.rhs_values[current]
-
-                # Update successors
                 for neighbor, _ in self.graph.get_neighbors(current):
+                    previous_rhs = self.rhs_values.get(neighbor, float("inf"))
                     self._update_vertex(neighbor)
+                    if self.rhs_values[neighbor] != previous_rhs:
+                        updated_nodes.append(neighbor)
+                invalidated = False
             else:
-                # Vertex is locally overconsistent
-                self.g_values[current] = float('inf')
+                self.g_values[current] = float("inf")
+                previous_rhs = self.rhs_values[current]
                 self._update_vertex(current)
-
-                # Update successors
+                if self.rhs_values[current] != previous_rhs:
+                    updated_nodes.append(current)
                 for neighbor, _ in self.graph.get_neighbors(current):
+                    previous_rhs = self.rhs_values.get(neighbor, float("inf"))
                     self._update_vertex(neighbor)
+                    if self.rhs_values[neighbor] != previous_rhs:
+                        updated_nodes.append(neighbor)
+                invalidated = True
+
+            self.last_trace.append(
+                DynamicStep(
+                    node=current,
+                    old_distance=old_distance,
+                    new_distance=self.g_values[current],
+                    rhs_value=rhs_value,
+                    invalidated=invalidated,
+                    updated_nodes=tuple(updated_nodes),
+                )
+            )
 
         self.distances = self.g_values.copy()
 
-    def handle_edge_weight_change(self, source: int, dest: int, new_weight: Optional[float]) -> None:
-        """
-        Handle edge weight change or edge removal
+    def handle_edge_weight_change(
+        self, source: str, dest: str, new_weight: Optional[float]
+    ) -> None:
+        """Add, update, or remove a directed edge and repair affected paths."""
+        if source not in self.graph.nodes:
+            self.graph.add_node(source)
+            self._update_vertex(source)
+        if dest not in self.graph.nodes:
+            self.graph.add_node(dest)
+            self._update_vertex(dest)
 
-        Args:
-            source: Source node
-            dest: Destination node
-            new_weight: New weight (None for edge removal)
-        """
+        old_weight = self.graph.get_weight(source, dest)
         if new_weight is None:
             self.graph.remove_edge(source, dest)
-        else:
-            old_weight = self.graph.get_weight(source, dest)
-            if old_weight != new_weight:
-                self.graph.update_weight(source, dest, new_weight)
+        elif old_weight != new_weight:
+            self.graph.add_edge(source, dest, new_weight)
 
-        # Update affected vertices
-        self._update_vertex(dest)
+        if old_weight != new_weight:
+            self._update_vertex(dest)
+            self.compute_shortest_paths()
 
-        # Recompute paths
-        self.compute_shortest_paths()
-
-    def get_path(self, end: int) -> List[int]:
-        """Reconstruct path from start to end"""
-        if self.distances.get(end, float('inf')) == float('inf'):
+    def get_path(self, end: str) -> List[str]:
+        """Reconstruct a shortest path from the start to ``end``."""
+        if self.distances.get(end, float("inf")) == float("inf"):
             return []
 
         path = [end]
+        visited = {end}
         current = end
-
         while current != self.start:
-            # Find best predecessor
-            best_pred = None
-            best_dist = float('inf')
-
-            for node in self.graph.nodes:
-                weight = self.graph.get_weight(node, current)
-                if weight is not None:
-                    dist = self.g_values[node] + weight
-                    if dist < best_dist:
-                        best_dist = dist
-                        best_pred = node
-
-            if best_pred is None:
+            predecessor = self.predecessors.get(current)
+            if predecessor is None or predecessor in visited:
                 return []
-
-            path.append(best_pred)
-            current = best_pred
+            path.append(predecessor)
+            visited.add(predecessor)
+            current = predecessor
 
         path.reverse()
         return path

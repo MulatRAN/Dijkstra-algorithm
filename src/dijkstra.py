@@ -7,7 +7,9 @@ from typing import Dict, List, Tuple, Optional
 from .graph import DynamicGraph
 
 
-def dijkstra(graph: DynamicGraph, start: int, end: Optional[int] = None) -> Tuple[Dict[int, float], Dict[int, Optional[int]]]:
+def dijkstra(
+    graph: DynamicGraph, start: str, end: Optional[str] = None
+) -> Tuple[Dict[str, float], Dict[str, Optional[str]]]:
     """
     Classic Dijkstra's shortest path algorithm
 
@@ -20,8 +22,8 @@ def dijkstra(graph: DynamicGraph, start: int, end: Optional[int] = None) -> Tupl
         distances: Dict mapping node to shortest distance from start
         predecessors: Dict mapping node to predecessor in shortest path
     """
-    distances: Dict[int, float] = {node: float('inf') for node in graph.nodes}
-    predecessors: Dict[int, Optional[int]] = {node: None for node in graph.nodes}
+    distances: Dict[str, float] = {node: float('inf') for node in graph.nodes}
+    predecessors: Dict[str, Optional[str]] = {node: None for node in graph.nodes}
     distances[start] = 0
 
     # Priority queue: (distance, node)
@@ -56,7 +58,9 @@ def dijkstra(graph: DynamicGraph, start: int, end: Optional[int] = None) -> Tupl
     return distances, predecessors
 
 
-def reconstruct_path(predecessors: Dict[int, Optional[int]], start: int, end: int) -> List[int]:
+def reconstruct_path(
+    predecessors: Dict[str, Optional[str]], start: str, end: str
+) -> List[str]:
     """
     Reconstruct path from start to end using predecessors
 
