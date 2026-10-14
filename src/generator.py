@@ -4,7 +4,7 @@ Creates test graphs with various properties for benchmarking
 """
 import random
 from typing import Tuple
-from .graph import DynamicGraph
+from .graph import DynamicGraph, alphabetic_label
 
 
 def generate_random_graph(
@@ -32,16 +32,16 @@ def generate_random_graph(
 
     graph = DynamicGraph()
 
-    # Add all nodes
-    for i in range(num_nodes):
-        graph.add_node(i)
+    nodes = [alphabetic_label(i) for i in range(num_nodes)]
+    for node in nodes:
+        graph.add_node(node)
 
     # Add random edges
-    for i in range(num_nodes):
-        for j in range(num_nodes):
-            if i != j and random.random() < edge_probability:
+    for source_index, source in enumerate(nodes):
+        for dest_index, dest in enumerate(nodes):
+            if source_index != dest_index and random.random() < edge_probability:
                 weight = random.uniform(min_weight, max_weight)
-                graph.add_edge(i, j, weight)
+                graph.add_edge(source, dest, weight)
 
     return graph
 
@@ -60,8 +60,8 @@ def generate_grid_graph(rows: int, cols: int, weight_range: Tuple[float, float] 
     """
     graph = DynamicGraph()
 
-    def node_id(r: int, c: int) -> int:
-        return r * cols + c
+    def node_id(r: int, c: int) -> str:
+        return alphabetic_label(r * cols + c)
 
     # Add nodes and edges
     for r in range(rows):
@@ -94,17 +94,18 @@ def generate_sparse_graph(num_nodes: int, avg_degree: int = 4, weight_range: Tup
     """
     graph = DynamicGraph()
 
-    for i in range(num_nodes):
-        graph.add_node(i)
+    nodes = [alphabetic_label(i) for i in range(num_nodes)]
+    for node in nodes:
+        graph.add_node(node)
 
     # Each node gets approximately avg_degree outgoing edges
-    for i in range(num_nodes):
+    for source in nodes:
         num_edges = max(1, int(random.gauss(avg_degree, avg_degree / 3)))
         num_edges = min(num_edges, num_nodes - 1)
 
-        targets = random.sample([j for j in range(num_nodes) if j != i], num_edges)
+        targets = random.sample([node for node in nodes if node != source], num_edges)
         for target in targets:
             weight = random.uniform(*weight_range)
-            graph.add_edge(i, target, weight)
+            graph.add_edge(source, target, weight)
 
     return graph

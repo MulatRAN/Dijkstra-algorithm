@@ -1,17 +1,57 @@
-"""
-Visualization and Plotting
-Generate graphs and comparison plots for results
-"""
+"""Visualization and plotting for graphs and benchmark results."""
+
+import math
+from typing import Dict, List, Optional
+
 import matplotlib.pyplot as plt
 import networkx as nx
-from typing import List, Dict, Optional
+
 from src.graph import DynamicGraph
 from experiments.benchmark import BenchmarkResult
 
 
+def plot_distances(
+    distances: Dict[str, float],
+    title: str = "Shortest distances from start node",
+) -> None:
+    """Plot finite shortest-path distances returned by Dijkstra."""
+    ordered_distances = sorted(distances.items(), key=lambda item: (len(item[0]), item[0]))
+    reachable = [
+        (node, distance)
+        for node, distance in ordered_distances
+        if math.isfinite(distance)
+    ]
+    unreachable = [
+        node for node, distance in ordered_distances if not math.isfinite(distance)
+    ]
+
+    nodes = [node for node, _ in reachable]
+    values = [distance for _, distance in reachable]
+
+    fig, ax = plt.subplots(figsize=(9, 5))
+    ax.bar(nodes, values, color="steelblue")
+    ax.set_xlabel("Node")
+    ax.set_ylabel("Shortest distance")
+    ax.set_title(title)
+    ax.set_xticks(nodes)
+
+    if unreachable:
+        ax.text(
+            0.99,
+            0.98,
+            f"Unreachable nodes: {', '.join(map(str, unreachable))}",
+            transform=ax.transAxes,
+            ha="right",
+            va="top",
+        )
+
+    fig.tight_layout()
+    plt.show()
+
+
 def visualize_graph(
     graph: DynamicGraph,
-    path: Optional[List[int]] = None,
+    path: Optional[List[str]] = None,
     title: str = "Graph Visualization",
     figsize: tuple = (10, 8)
 ) -> None:
@@ -27,12 +67,12 @@ def visualize_graph(
     G = nx.DiGraph()
 
     # Add nodes
-    for node in graph.nodes:
+    for node in sorted(graph.nodes, key=lambda label: (len(label), label)):
         G.add_node(node)
 
     # Add edges with weights
     edge_labels = {}
-    for source in graph.nodes:
+    for source in sorted(graph.nodes, key=lambda label: (len(label), label)):
         for dest, weight in graph.get_neighbors(source):
             G.add_edge(source, dest)
             edge_labels[(source, dest)] = f"{weight:.1f}"

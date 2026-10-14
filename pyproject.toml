@@ -17,6 +17,7 @@ dependencies = [
     "matplotlib>=3.5.0",
     "pytest>=7.0.0",
     "numpy>=1.21.0",
+    "customtkinter>=5.2.2",
 ]
 
 [project.optional-dependencies]

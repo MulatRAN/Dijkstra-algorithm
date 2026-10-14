@@ -5,20 +5,41 @@ Supports node and edge additions/removals, weight updates
 from typing import Dict, List, Set, Tuple, Optional
 
 
+def alphabetic_label(index: int) -> str:
+    """Convert a zero-based index to spreadsheet-style labels: A, ..., Z, AA, ..."""
+    if index < 0:
+        raise ValueError("index must be non-negative")
+
+    label = ""
+    index += 1
+    while index:
+        index, remainder = divmod(index - 1, 26)
+        label = chr(ord("A") + remainder) + label
+    return label
+
+
+def next_node_label(nodes: Set[str]) -> str:
+    """Return the first available alphabetic node label."""
+    index = 0
+    while (label := alphabetic_label(index)) in nodes:
+        index += 1
+    return label
+
+
 class DynamicGraph:
     """Graph structure supporting dynamic modifications"""
 
     def __init__(self):
-        self.nodes: Set[int] = set()
-        self.edges: Dict[int, List[Tuple[int, float]]] = {}
+        self.nodes: Set[str] = set()
+        self.edges: Dict[str, List[Tuple[str, float]]] = {}
 
-    def add_node(self, node: int) -> None:
+    def add_node(self, node: str) -> None:
         """Add a node to the graph"""
         self.nodes.add(node)
         if node not in self.edges:
             self.edges[node] = []
 
-    def remove_node(self, node: int) -> None:
+    def remove_node(self, node: str) -> None:
         """Remove a node and all its edges"""
         if node not in self.nodes:
             return
@@ -32,7 +53,7 @@ class DynamicGraph:
                 (dest, weight) for dest, weight in self.edges[source] if dest != node
             ]
 
-    def add_edge(self, source: int, dest: int, weight: float) -> None:
+    def add_edge(self, source: str, dest: str, weight: float) -> None:
         """Add or update an edge with given weight"""
         if source not in self.nodes:
             self.add_node(source)
@@ -44,12 +65,12 @@ class DynamicGraph:
         # Add new edge
         self.edges[source].append((dest, weight))
 
-    def remove_edge(self, source: int, dest: int) -> None:
+    def remove_edge(self, source: str, dest: str) -> None:
         """Remove an edge from the graph"""
         if source in self.edges:
             self.edges[source] = [(d, w) for d, w in self.edges[source] if d != dest]
 
-    def update_weight(self, source: int, dest: int, new_weight: float) -> None:
+    def update_weight(self, source: str, dest: str, new_weight: float) -> None:
         """Update the weight of an existing edge"""
         if source not in self.edges:
             return
@@ -59,11 +80,11 @@ class DynamicGraph:
                 self.edges[source][i] = (dest, new_weight)
                 break
 
-    def get_neighbors(self, node: int) -> List[Tuple[int, float]]:
+    def get_neighbors(self, node: str) -> List[Tuple[str, float]]:
         """Get all neighbors of a node with edge weights"""
         return self.edges.get(node, [])
 
-    def get_weight(self, source: int, dest: int) -> Optional[float]:
+    def get_weight(self, source: str, dest: str) -> Optional[float]:
         """Get weight of edge from source to dest"""
         for d, w in self.edges.get(source, []):
             if d == dest:

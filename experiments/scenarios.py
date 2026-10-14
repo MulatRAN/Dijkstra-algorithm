@@ -4,7 +4,7 @@ Defines various graph modification scenarios for testing
 """
 from typing import List, Tuple, Callable
 import random
-from src.graph import DynamicGraph
+from src.graph import DynamicGraph, next_node_label
 
 
 class ChangeScenario:
@@ -25,7 +25,7 @@ class EdgeWeightIncrease(ChangeScenario):
         super().__init__(f"Edge Weight Increase (×{increase_factor})")
         self.increase_factor = increase_factor
 
-    def apply(self, graph: DynamicGraph) -> Tuple[int, int, float, float]:
+    def apply(self, graph: DynamicGraph) -> Tuple[str, str, float, float]:
         """Returns (source, dest, old_weight, new_weight)"""
         # Find random edge
         nodes_with_edges = [n for n in graph.nodes if graph.get_neighbors(n)]
@@ -49,7 +49,7 @@ class EdgeWeightDecrease(ChangeScenario):
         super().__init__(f"Edge Weight Decrease (×{decrease_factor})")
         self.decrease_factor = decrease_factor
 
-    def apply(self, graph: DynamicGraph) -> Tuple[int, int, float, float]:
+    def apply(self, graph: DynamicGraph) -> Tuple[str, str, float, float]:
         """Returns (source, dest, old_weight, new_weight)"""
         nodes_with_edges = [n for n in graph.nodes if graph.get_neighbors(n)]
         if not nodes_with_edges:
@@ -71,7 +71,7 @@ class EdgeRemoval(ChangeScenario):
     def __init__(self):
         super().__init__("Edge Removal")
 
-    def apply(self, graph: DynamicGraph) -> Tuple[int, int]:
+    def apply(self, graph: DynamicGraph) -> Tuple[str, str]:
         """Returns (source, dest)"""
         nodes_with_edges = [n for n in graph.nodes if graph.get_neighbors(n)]
         if not nodes_with_edges:
@@ -93,7 +93,7 @@ class EdgeAddition(ChangeScenario):
         super().__init__("Edge Addition")
         self.weight_range = weight_range
 
-    def apply(self, graph: DynamicGraph) -> Tuple[int, int, float]:
+    def apply(self, graph: DynamicGraph) -> Tuple[str, str, float]:
         """Returns (source, dest, weight)"""
         nodes = list(graph.nodes)
         if len(nodes) < 2:
@@ -121,9 +121,9 @@ class NodeAddition(ChangeScenario):
         self.num_edges = num_edges
         self.weight_range = weight_range
 
-    def apply(self, graph: DynamicGraph) -> Tuple[int, List[Tuple[int, float]]]:
+    def apply(self, graph: DynamicGraph) -> Tuple[str, List[Tuple[str, float]]]:
         """Returns (new_node, [(dest, weight), ...])"""
-        new_node = max(graph.nodes) + 1 if graph.nodes else 0
+        new_node = next_node_label(graph.nodes)
         graph.add_node(new_node)
 
         existing_nodes = [n for n in graph.nodes if n != new_node]

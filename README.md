@@ -10,12 +10,14 @@ Research project exploring dynamic shortest path algorithms that efficiently mai
 │   ├── graph.py           # Dynamic graph data structure
 │   ├── dijkstra.py        # Classic Dijkstra (baseline)
 │   ├── dynamic_algo.py    # Dynamic shortest path algorithm
-│   └── generator.py       # Test graph generators
+│   └── generator.py       # Test graph generators (alphabetic node labels)
 ├── experiments/           # Experimental framework
 │   ├── scenarios.py       # Graph modification scenarios
 │   └── benchmark.py       # Performance benchmarking
 ├── viz/                   # Visualization
 │   └── plots.py          # Graph and result visualization
+├── examples/              # Runnable learning examples
+│   └── demo_dijkstra.py  # Dijkstra graph and distance plots
 ├── tests/                 # Unit tests
 │   ├── test_graph.py
 │   ├── test_dijkstra.py
@@ -40,6 +42,26 @@ pip install -r requirements.txt
 
 ## Usage
 
+### Interactive interface
+
+From the project root, start the desktop app with:
+
+```bash
+python app.py
+```
+
+The app opens on the directed sample graph used in this README's basic example.
+Choose an edge to change its weight, remove it, or add a directed edge. The graph
+and shortest path update alongside a comparison of classic full recomputation
+and the dynamic algorithm's incremental update.
+Use the step-through controls to play, pause, or inspect each algorithm one
+vertex at a time; the active node and affected vertices are highlighted on the
+graph. The comparison also reports the latest measured runtime and trace
+counters: finalized vertices and successful relaxations for classic Dijkstra,
+and repaired vertices and changed `rhs` values for the dynamic algorithm.
+These counters describe different kinds of work and should be interpreted
+alongside the explanatory labels rather than as identical operations.
+
 ### Running Tests
 
 ```bash
@@ -55,20 +77,32 @@ from src.dynamic_algo import DynamicDijkstra
 
 # Create graph
 graph = DynamicGraph()
-graph.add_edge(0, 1, 4.0)
-graph.add_edge(0, 2, 1.0)
-graph.add_edge(2, 1, 2.0)
+graph.add_edge("A", "B", 4.0)
+graph.add_edge("A", "C", 1.0)
+graph.add_edge("C", "B", 2.0)
 
 # Classic Dijkstra
-distances, predecessors = dijkstra(graph, start=0)
+distances, predecessors = dijkstra(graph, start="A")
 
 # Dynamic algorithm
-dyn = DynamicDijkstra(graph, start=0)
+dyn = DynamicDijkstra(graph, start="A")
 dyn.compute_shortest_paths()
 
 # Modify graph and update
-dyn.handle_edge_weight_change(0, 1, 10.0)
+dyn.handle_edge_weight_change("A", "B", 10.0)
 ```
+
+### See Dijkstra in action
+
+From the project root, run:
+
+```bash
+python -m examples.demo_dijkstra
+```
+
+The example prints the shortest distances and route, then opens a graph with the
+route highlighted and a chart of distances from the start node. Close the graph
+window to see the distance chart.
 
 ### Running Benchmarks
 
@@ -83,7 +117,7 @@ graph = generate_random_graph(100, edge_probability=0.3, seed=42)
 # Run benchmarks
 benchmark = Benchmark()
 scenarios = [EdgeWeightIncrease(), EdgeRemoval()]
-results = benchmark.run_batch([(graph, 0, 50)], scenarios, num_runs=10)
+results = benchmark.run_batch([(graph, "A", "AX")], scenarios, num_runs=10)
 
 # Display results
 benchmark.print_summary()
@@ -96,7 +130,7 @@ benchmark.export_csv('results.csv')
 from viz.plots import visualize_graph, plot_performance_comparison
 
 # Visualize graph with path
-visualize_graph(graph, path=[0, 2, 1], title="Shortest Path")
+visualize_graph(graph, path=["A", "C", "B"], title="Shortest Path")
 
 # Plot benchmark results
 plot_performance_comparison(results, title="Performance Comparison")
