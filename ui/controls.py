@@ -2,12 +2,26 @@
 
 import math
 import time
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, cast
 
+from src.graph import DynamicGraph
 from .constants import BLUE, BLUE_HOVER, BORDER_SOFT, ERROR, MUTED, SOFT_TEXT, WHITE
 
 if TYPE_CHECKING:
     from .app import DijkstraLab
+
+
+def _current_path_cost(graph: DynamicGraph, path: List[str]) -> Optional[float]:
+    if not path:
+        return None
+
+    total = 0.0
+    for source, dest in zip(path, path[1:]):
+        weight = graph.get_weight(source, dest)
+        if weight is None:
+            return None
+        total += weight
+    return total
 
 
 class ControlsMixin:
@@ -124,6 +138,7 @@ class ControlsMixin:
         target = app.target_node.get()
         classic_distance = app.classic_distances.get(target, float("inf"))
         dynamic_distance = app.dynamic_algorithm.distances.get(target, float("inf"))
+        classic_current_cost = _current_path_cost(app.graph, app.classic_path)
 
         if app.change_count:
             app.classic_result_labels["status"].configure(
@@ -144,9 +159,17 @@ class ControlsMixin:
             text="Chemin : " + (" → ".join(dynamic_path) if dynamic_path else "inaccessible")
         )
         app.classic_result_labels["distance"].configure(
-            text=f"Coût total : {classic_distance:g}"
-            if math.isfinite(classic_distance)
-            else "Coût total : inaccessible"
+            text=(
+                f"Coût réel actuel du chemin : {classic_current_cost:g}"
+                if app.change_count and classic_current_cost is not None
+                else "Coût réel actuel : chemin interrompu"
+                if app.change_count and app.classic_path
+                else "Coût réel actuel : inaccessible"
+                if app.change_count
+                else f"Coût total : {classic_distance:g}"
+                if math.isfinite(classic_distance)
+                else "Coût total : inaccessible"
+            )
         )
         app.dynamic_result_labels["distance"].configure(
             text=f"Coût total : {dynamic_distance:g}"
