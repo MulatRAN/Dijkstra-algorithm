@@ -1,0 +1,159 @@
+"""Visual styles, layout thresholds, and sample graph coordinates."""
+
+from typing import Dict, Tuple
+
+BACKGROUND = "#F4F7FB"
+
+CARD = "#FFFFFF"
+
+INK = "#17243A"
+
+MUTED = "#718096"
+
+BLUE = "#3267E9"
+
+BLUE_HOVER = "#2453C5"
+
+PURPLE = "#7856D8"
+
+ORANGE = "#D97706"
+
+ERROR = "#B42318"
+
+LINE = "#E2E8F0"
+
+CANVAS = "#F8FAFD"
+
+WHITE = "#FFFFFF"
+
+CONTROL_BG = "#EDF1F7"
+
+CONTROL_HOVER = "#DCE4EF"
+
+CONTROL_HOVER_STRONG = "#CFD9E8"
+
+PANEL_BG = "#F1F5F9"
+
+SOFT_TEXT = "#64748B"
+
+STRONG_MUTED = "#334155"
+
+BADGE_BG = "#E8EEF8"
+
+BADGE_TEXT = "#475569"
+
+BORDER_SOFT = "#CBD5E1"
+
+DISABLED_TEXT = "#94A3B8"
+
+SELECTOR_BG = "#F0F4FA"
+
+SELECTOR_BUTTON = "#E1E9F5"
+
+SELECTOR_HOVER = "#D5E1F2"
+
+NODE_START = "#D1D5DB"
+
+NODE_TARGET = "#EDE9FE"
+
+PATH_BLUE = "#2563EB"
+
+NODE_ACTIVE = "#FDE68A"
+
+DISTANCE_UPDATED = "#FEF3C7"
+
+TRACE_EDGE = "#F59E0B"
+
+EDGE_MUTED = "#65758B"
+
+VISITED_FILL = "#E0E7FF"
+
+VISITED_OUTLINE = "#818CF8"
+
+START_OUTLINE = "#444444"
+
+TARGET_OUTLINE = "#7C3AED"
+
+NODE_OUTLINE = "#555555"
+
+CANVAS_TEXT = "#202020"
+
+NODE_TEXT = "#222222"
+
+SPACE = 8
+
+CARD_RADIUS = 14
+
+CONTROL_RADIUS = 8
+
+STATUS_RADIUS = 9
+
+MARKER_RADIUS = 5
+
+FONT_FAMILY = "Manrope"
+
+CANVAS_FONT_FAMILY = "Segoe UI"
+
+FONT_CAPTION = 10
+
+FONT_BODY = 12
+
+FONT_SECTION = 18
+
+FONT_TITLE = 30
+
+INITIAL_WINDOW_GEOMETRY = "1280x900"
+
+WINDOW_MIN_SIZE = (420, 560)
+
+WIDE_LAYOUT_MIN_WIDTH = 1040
+
+COMPARISON_COLUMNS_MIN_WIDTH = 760
+
+PLAYBACK_GRID_MAX_WIDTH = 1200
+
+LEGEND_THREE_COLUMN_MIN_WIDTH = 900
+
+CANVAS_WIDE_MIN_HEIGHT = 440
+
+CANVAS_STACK_MIN_HEIGHT = 380
+
+PAGE_PADDING = 30
+
+CARD_PADDING = 18
+
+NODE_WIDTH = 96
+
+NODE_HEIGHT = 48
+
+NODE_POSITIONS: Dict[str, Tuple[float, float]] = {
+    "A": (0.13, 0.50),
+    "B": (0.38, 0.18),
+    "C": (0.38, 0.82),
+    "D": (0.69, 0.19),
+    "E": (0.87, 0.69),
+}
+
+DEMO_CONNECTIONS: Tuple[Tuple[str, str, float], ...] = (
+    ("A", "B", 4.0),
+    ("A", "C", 1.0),
+    ("C", "B", 2.0),
+    ("B", "D", 1.0),
+    ("C", "D", 5.0),
+    ("D", "E", 3.0),
+    ("B", "E", 7.0),
+)
+
+EDGE_LABEL_POSITIONS: Dict[Tuple[str, str], Tuple[float, float]] = {
+    ("A", "B"): (0.24, 0.31),
+    ("A", "C"): (0.24, 0.70),
+    ("C", "B"): (0.42, 0.50),
+    ("B", "D"): (0.54, 0.13),
+    ("C", "D"): (0.55, 0.48),
+    ("D", "E"): (0.82, 0.40),
+    ("B", "E"): (0.66, 0.39),
+}
+
+EDGE_CONTROL_POSITIONS: Dict[Tuple[str, str], Tuple[float, float]] = {
+    ("B", "E"): (0.78, 0.25),
+}

@@ -11,6 +11,16 @@ Research project exploring dynamic shortest path algorithms that efficiently mai
 │   ├── dijkstra.py        # Classic Dijkstra (baseline)
 │   ├── dynamic_algo.py    # Dynamic shortest path algorithm
 │   └── generator.py       # Test graph generators (alphabetic node labels)
+├── ui/                    # Desktop application interface
+│   ├── app.py            # Main window and application orchestration
+│   ├── constants.py      # Shared visual styles and layout constants
+│   ├── controls.py       # Graph editing and result presentation
+│   ├── graph_canvas.py   # Graph drawing and endpoint updates
+│   ├── graph_data.py     # Demo graph construction and copy helpers
+│   ├── layout.py         # Responsive layout helpers
+│   ├── models.py         # Interface presentation models
+│   ├── panels.py         # Interface panel and widget construction
+│   └── trace.py          # Algorithm traces and playback controls
 ├── experiments/           # Experimental framework
 │   ├── scenarios.py       # Graph modification scenarios
 │   └── benchmark.py       # Performance benchmarking
